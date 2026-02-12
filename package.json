@@ -23,6 +23,7 @@
     "@types/node": "^22.10.0",
     "@types/react": "^19.0.0",
     "@types/react-dom": "^19.0.0",
+    "dotenv": "^17.2.4",
     "eslint": "^9.0.0",
     "eslint-config-next": "15.1.0",
     "pg": "^8.18.0",
