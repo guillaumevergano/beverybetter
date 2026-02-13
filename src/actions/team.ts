@@ -1,8 +1,9 @@
 "use server";
 
-import { createClient } from "@/lib/supabase/server";
+import { createClient, createServiceClient } from "@/lib/supabase/server";
 import { TEAM_NAME_MIN_LENGTH, TEAM_NAME_MAX_LENGTH } from "@/lib/constants";
-import type { Team, TeamMemberStats, TeamRole } from "@/types";
+import { grantXP, checkBadges } from "@/lib/gamification";
+import type { Team, TeamMemberStats, TeamRole, GamificationEvent } from "@/types";
 
 // ============================================
 // createTeamAction
@@ -558,7 +559,6 @@ export async function transferOwnershipAction(
   // ne s'execute qu'a la creation.
 
   // Approche simplifiee: on utilise le service client pour cette operation atomique
-  const { createServiceClient } = await import("@/lib/supabase/server");
   const serviceClient = await createServiceClient();
 
   await serviceClient
@@ -569,4 +569,97 @@ export async function transferOwnershipAction(
     ]);
 
   return { success: true };
+}
+
+// ============================================
+// joinViaReferralAction
+// Rejoindre l'equipe du parrain + recompenser le parrain
+// ============================================
+
+export async function joinViaReferralAction(
+  referralCode: string
+): Promise<{ success: boolean; events?: GamificationEvent[]; error?: string }> {
+  const supabase = await createClient();
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  if (!user) {
+    return { success: false, error: "Non authentifie" };
+  }
+
+  // Trouver le parrain par son code
+  const serviceClient = await createServiceClient();
+  const { data: referrer } = await serviceClient
+    .from("profiles")
+    .select("id")
+    .eq("referral_code", referralCode.toUpperCase())
+    .maybeSingle();
+
+  if (!referrer) {
+    return { success: false, error: "Code de parrainage invalide" };
+  }
+
+  if (referrer.id === user.id) {
+    return { success: false, error: "Tu ne peux pas utiliser ton propre code" };
+  }
+
+  // Rejoindre l'equipe du parrain si possible
+  const { data: referrerMembership } = await serviceClient
+    .from("team_members")
+    .select("team_id")
+    .eq("user_id", referrer.id)
+    .maybeSingle();
+
+  if (referrerMembership) {
+    // Verifier que l'user n'est pas deja dans une equipe
+    const { data: existingMember } = await supabase
+      .from("team_members")
+      .select("team_id")
+      .eq("user_id", user.id)
+      .maybeSingle();
+
+    if (!existingMember) {
+      // Verifier que l'equipe n'est pas pleine
+      const { data: team } = await serviceClient
+        .from("teams")
+        .select("max_members")
+        .eq("id", referrerMembership.team_id)
+        .single();
+
+      const { count } = await serviceClient
+        .from("team_members")
+        .select("*", { count: "exact", head: true })
+        .eq("team_id", referrerMembership.team_id);
+
+      if (team && (count ?? 0) < team.max_members) {
+        await supabase
+          .from("team_members")
+          .insert({ team_id: referrerMembership.team_id, user_id: user.id, role: "member" });
+      }
+    }
+  }
+
+  // Recompenser le parrain (si pas deja fait)
+  const { data: alreadyRewarded } = await serviceClient
+    .from("xp_events")
+    .select("id")
+    .eq("user_id", referrer.id)
+    .eq("source", "referral")
+    .eq("source_id", user.id)
+    .maybeSingle();
+
+  const events: GamificationEvent[] = [];
+
+  if (!alreadyRewarded) {
+    // Donner XP au parrain
+    const xpEvents = await grantXP(serviceClient, referrer.id, 100, "referral", user.id);
+    events.push(...xpEvents);
+
+    // Verifier les badges du parrain
+    const badgeEvents = await checkBadges(serviceClient, referrer.id);
+    events.push(...badgeEvents);
+  }
+
+  return { success: true, events };
 }

@@ -7,7 +7,7 @@ export type ChapterLevel = "débutant" | "intermédiaire" | "avancé";
 export type ContentType = "course" | "qcm";
 export type BadgeRarity = "common" | "rare" | "epic" | "legendary";
 export type ChallengeType = "weekly" | "monthly";
-export type XPSource = "course" | "quiz" | "badge" | "challenge" | "streak" | "certification";
+export type XPSource = "course" | "quiz" | "badge" | "challenge" | "streak" | "certification" | "referral";
 
 // ---- Database Tables ----
 export interface Profile {
@@ -17,6 +17,8 @@ export interface Profile {
   xp_total: number;
   current_level: number;
   current_title: string;
+  referral_code: string;
+  referred_by: string | null;
   created_at: string;
   updated_at: string;
 }

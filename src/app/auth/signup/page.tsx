@@ -26,7 +26,10 @@ export default function SignupPage() {
       email,
       password,
       options: {
-        data: { pseudo },
+        data: {
+          pseudo,
+          ...(inviteCode ? { referral_code: inviteCode } : {}),
+        },
       },
     });
 

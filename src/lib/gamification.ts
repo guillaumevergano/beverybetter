@@ -37,6 +37,7 @@ export const XP_REWARDS = {
   streak_7: 50,
   streak_30: 200,
   streak_100: 500,
+  referral: 100,
 } as const;
 
 // ============================================
@@ -288,6 +289,7 @@ interface ConditionStats {
   redemption_perfect: number;
   early_adopter_rank: number;
   speed_perfect: number;
+  referrals_count: number;
 }
 
 async function getConditionStats(
@@ -301,6 +303,7 @@ async function getConditionStats(
     profileResult,
     technologiesResult,
     xpEventsResult,
+    referralsResult,
   ] = await Promise.all([
     supabase
       .from("user_progress")
@@ -323,6 +326,10 @@ async function getConditionStats(
       .eq("user_id", userId)
       .order("created_at", { ascending: false })
       .limit(100),
+    supabase
+      .from("profiles")
+      .select("id", { count: "exact", head: true })
+      .eq("referred_by", userId),
   ]);
 
   const progressRows = (progressResult.data ?? []) as Array<{
@@ -461,6 +468,7 @@ async function getConditionStats(
     redemption_perfect: redemptionPerfect,
     early_adopter_rank: earlyAdopterRank,
     speed_perfect: 0, // Tracked via client-side timing, not checked here
+    referrals_count: referralsResult.count ?? 0,
   };
 }
 
@@ -500,6 +508,8 @@ function evaluateBadgeCondition(
       return stats.early_adopter_rank <= conditionValue;
     case "speed_perfect":
       return stats.speed_perfect >= conditionValue;
+    case "referrals":
+      return stats.referrals_count >= conditionValue;
     default:
       return false;
   }
