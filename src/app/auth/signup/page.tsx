@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
@@ -13,7 +13,9 @@ export default function SignupPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+  const inviteCode = searchParams.get("invite");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,9 +36,15 @@ export default function SignupPage() {
       return;
     }
 
-    router.push("/dashboard");
+    if (inviteCode) {
+      router.push(`/invite/${inviteCode}`);
+    } else {
+      router.push("/dashboard");
+    }
     router.refresh();
   }
+
+  const loginHref = inviteCode ? `/auth/login?invite=${inviteCode}` : "/auth/login";
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-[#f8fafc]">
@@ -48,7 +56,7 @@ export default function SignupPage() {
           >
             <span className="text-[#0070f3]">B</span>e Very Better
           </h1>
-          <p className="text-[#64748b]">Crée ton compte pour commencer</p>
+          <p className="text-[#64748b]">Cree ton compte pour commencer</p>
         </div>
 
         <form
@@ -114,18 +122,18 @@ export default function SignupPage() {
               required
               minLength={6}
               className="w-full px-4 py-2.5 rounded-[12px] border border-[#e2e8f0] text-sm focus:outline-none focus:ring-2 focus:ring-[#0070f3] focus:border-transparent transition-all"
-              placeholder="6 caractères minimum"
+              placeholder="6 caracteres minimum"
             />
           </div>
 
           <Button type="submit" loading={loading} className="w-full">
-            Créer mon compte
+            Creer mon compte
           </Button>
 
           <p className="text-center text-sm text-[#64748b]">
-            Déjà un compte ?{" "}
+            Deja un compte ?{" "}
             <Link
-              href="/auth/login"
+              href={loginHref}
               className="text-[#0070f3] font-medium hover:underline"
             >
               Connecte-toi

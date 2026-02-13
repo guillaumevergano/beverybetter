@@ -32,7 +32,7 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Routes protégées : redirect vers login si pas connecté
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/learn") || pathname.startsWith("/qcm") || pathname.startsWith("/profile") || pathname.startsWith("/gamification") || pathname.startsWith("/account")) {
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/learn") || pathname.startsWith("/qcm") || pathname.startsWith("/profile") || pathname.startsWith("/gamification") || pathname.startsWith("/account") || pathname.startsWith("/team")) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = "/auth/login";
@@ -44,7 +44,13 @@ export async function updateSession(request: NextRequest) {
   if (pathname.startsWith("/auth")) {
     if (user) {
       const url = request.nextUrl.clone();
-      url.pathname = "/dashboard";
+      const inviteCode = request.nextUrl.searchParams.get("invite");
+      if (inviteCode) {
+        url.pathname = `/invite/${inviteCode}`;
+        url.searchParams.delete("invite");
+      } else {
+        url.pathname = "/dashboard";
+      }
       return NextResponse.redirect(url);
     }
   }
