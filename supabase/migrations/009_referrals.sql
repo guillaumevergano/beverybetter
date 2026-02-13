@@ -86,7 +86,7 @@ BEGIN
   );
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql SECURITY DEFINER;
+$$ LANGUAGE plpgsql SECURITY DEFINER SET search_path = public;
 
 -- ---- Badges parrainage ----
 INSERT INTO badges (slug, name, description, icon, rarity, condition_type, condition_value, xp_reward) VALUES

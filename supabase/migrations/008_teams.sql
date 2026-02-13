@@ -73,6 +73,7 @@ CREATE OR REPLACE FUNCTION trigger_add_owner_as_member()
 RETURNS TRIGGER
 LANGUAGE plpgsql
 SECURITY DEFINER
+SET search_path = public
 AS $$
 BEGIN
   INSERT INTO team_members (team_id, user_id, role)
@@ -109,6 +110,7 @@ RETURNS UUID
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
+SET search_path = public
 AS $$
   SELECT team_id FROM team_members WHERE user_id = auth.uid() LIMIT 1;
 $$;
@@ -119,6 +121,7 @@ RETURNS BOOLEAN
 LANGUAGE sql
 STABLE
 SECURITY DEFINER
+SET search_path = public
 AS $$
   SELECT EXISTS (
     SELECT 1
