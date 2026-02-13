@@ -6,6 +6,7 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/types";
 import { formatXP } from "@/lib/utils";
+import { useAuth } from "@/hooks/useAuth";
 
 interface UserMenuProps {
   profile: Profile;
@@ -16,6 +17,7 @@ export function UserMenu({ profile }: UserMenuProps) {
   const menuRef = useRef<HTMLDivElement>(null);
   const router = useRouter();
   const supabase = createClient();
+  const { team } = useAuth();
 
   useEffect(() => {
     function handleClickOutside(e: MouseEvent) {
@@ -69,6 +71,13 @@ export function UserMenu({ profile }: UserMenuProps) {
             Mon profil
           </Link>
           <Link
+            href="/team"
+            onClick={() => setOpen(false)}
+            className="block px-4 py-2 text-sm text-[#0f172a] hover:bg-[#f1f5f9] transition-colors"
+          >
+            {team ? "Mon equipe" : "Equipe"}
+          </Link>
+          <Link
             href="/account"
             onClick={() => setOpen(false)}
             className="block px-4 py-2 text-sm text-[#0f172a] hover:bg-[#f1f5f9] transition-colors"
@@ -79,7 +88,7 @@ export function UserMenu({ profile }: UserMenuProps) {
             onClick={handleLogout}
             className="w-full text-left px-4 py-2 text-sm text-[#ef4444] hover:bg-[#fef2f2] transition-colors"
           >
-            Se déconnecter
+            Se deconnecter
           </button>
         </div>
       )}

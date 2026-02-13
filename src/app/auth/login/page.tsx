@@ -1,7 +1,7 @@
 "use client";
 
 import { useState } from "react";
-import { useRouter } from "next/navigation";
+import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
@@ -14,7 +14,9 @@ export default function LoginPage() {
   const [error, setError] = useState("");
   const [loading, setLoading] = useState(false);
   const router = useRouter();
+  const searchParams = useSearchParams();
   const supabase = createClient();
+  const inviteCode = searchParams.get("invite");
 
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
@@ -34,9 +36,15 @@ export default function LoginPage() {
       return;
     }
 
-    router.push("/dashboard");
+    if (inviteCode) {
+      router.push(`/invite/${inviteCode}`);
+    } else {
+      router.push("/dashboard");
+    }
     router.refresh();
   }
+
+  const signupHref = inviteCode ? `/auth/signup?invite=${inviteCode}` : "/auth/signup";
 
   return (
     <div className="min-h-screen flex items-center justify-center px-4 bg-[#f8fafc]">
@@ -105,7 +113,7 @@ export default function LoginPage() {
           <p className="text-center text-sm text-[#64748b]">
             Pas encore de compte ?{" "}
             <Link
-              href="/auth/signup"
+              href={signupHref}
               className="text-[#0070f3] font-medium hover:underline"
             >
               Inscris-toi

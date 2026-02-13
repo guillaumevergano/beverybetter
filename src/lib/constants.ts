@@ -21,6 +21,11 @@ export const MAX_GENERATIONS_PER_HOUR = 10;
 export const CLAUDE_MODEL = "claude-sonnet-4-20250514";
 export const CLAUDE_MAX_TOKENS = 2000;
 
+// Teams
+export const TEAM_NAME_MIN_LENGTH = 2;
+export const TEAM_NAME_MAX_LENGTH = 40;
+export const TEAM_MAX_MEMBERS = 20;
+
 // Routes
 export const ROUTES = {
   HOME: "/",
@@ -31,6 +36,9 @@ export const ROUTES = {
   CHAPTER: (techId: string, chapterId: string) =>
     `/learn/${techId}/${chapterId}`,
   QCM: (techId: string, chapterId: string) => `/learn/${techId}/${chapterId}/quiz`,
+  TEAM: "/team",
+  TEAM_CREATE: "/team/create",
+  TEAM_SETTINGS: "/team/settings",
 } as const;
 
 // Design tokens

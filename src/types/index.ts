@@ -247,6 +247,44 @@ export interface GamificationEvent {
   streak_days?: number;
 }
 
+// ---- Teams ----
+
+export type TeamRole = "owner" | "member";
+
+export interface Team {
+  id: string;
+  name: string;
+  description: string;
+  owner_id: string;
+  invite_code: string;
+  max_members: number;
+  created_at: string;
+  updated_at: string;
+}
+
+export interface TeamMember {
+  team_id: string;
+  user_id: string;
+  role: TeamRole;
+  joined_at: string;
+}
+
+export interface TeamMemberStats {
+  user_id: string;
+  pseudo: string;
+  avatar_url: string | null;
+  role: TeamRole;
+  joined_at: string;
+  xp_total: number;
+  current_level: number;
+  current_title: string;
+  current_streak: number;
+  longest_streak: number;
+  badges_count: number;
+  courses_completed: number;
+  certifications_count: number;
+}
+
 // ---- Exam / Certification ----
 
 export type CertMention = "Bien" | "Très Bien" | "Exceptionnelle";
