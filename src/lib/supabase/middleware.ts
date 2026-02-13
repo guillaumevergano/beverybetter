@@ -32,7 +32,7 @@ export async function updateSession(request: NextRequest) {
   const { pathname } = request.nextUrl;
 
   // Routes protégées : redirect vers login si pas connecté
-  if (pathname.startsWith("/dashboard") || pathname.startsWith("/learn") || pathname.startsWith("/qcm")) {
+  if (pathname.startsWith("/dashboard") || pathname.startsWith("/learn") || pathname.startsWith("/qcm") || pathname.startsWith("/profile") || pathname.startsWith("/gamification") || pathname.startsWith("/account")) {
     if (!user) {
       const url = request.nextUrl.clone();
       url.pathname = "/auth/login";

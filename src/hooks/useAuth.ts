@@ -1,39 +1,80 @@
 "use client";
 
-import { useEffect, useState } from "react";
+import { createContext, useContext, useEffect, useState, useCallback } from "react";
 import { createClient } from "@/lib/supabase/client";
 import type { Profile } from "@/types";
 import type { User } from "@supabase/supabase-js";
+import type { ReactNode } from "react";
+import React from "react";
 
-export function useAuth() {
-  const [user, setUser] = useState<User | null>(null);
-  const [profile, setProfile] = useState<Profile | null>(null);
-  const [loading, setLoading] = useState(true);
-  const supabase = createClient();
+interface AuthContextValue {
+  user: User | null;
+  profile: Profile | null;
+  loading: boolean;
+  refreshProfile: () => Promise<void>;
+}
+
+const AuthContext = createContext<AuthContextValue>({
+  user: null,
+  profile: null,
+  loading: true,
+  refreshProfile: async () => {},
+});
+
+interface AuthProviderProps {
+  children: ReactNode;
+  initialUser?: User | null;
+  initialProfile?: Profile | null;
+}
+
+export function AuthProvider({ children, initialUser, initialProfile }: AuthProviderProps) {
+  const [user, setUser] = useState<User | null>(initialUser ?? null);
+  const [profile, setProfile] = useState<Profile | null>(initialProfile ?? null);
+  const [loading, setLoading] = useState(!initialProfile);
 
   useEffect(() => {
-    async function getSession() {
-      const {
-        data: { user: authUser },
-      } = await supabase.auth.getUser();
+    const supabase = createClient();
 
-      setUser(authUser);
+    // If we already have initial data from the server, just listen for changes
+    if (!initialProfile) {
+      // Fallback: fetch client-side if no server data was provided
+      async function getSession() {
+        try {
+          const {
+            data: { user: authUser },
+            error: authError,
+          } = await supabase.auth.getUser();
 
-      if (authUser) {
-        const { data } = await supabase
-          .from("profiles")
-          .select("*")
-          .eq("id", authUser.id)
-          .single();
+          if (authError) {
+            console.error("[useAuth] getUser error:", authError.message);
+          }
 
-        setProfile(data);
+          setUser(authUser);
+
+          if (authUser) {
+            const { data, error: profileError } = await supabase
+              .from("profiles")
+              .select("*")
+              .eq("id", authUser.id)
+              .single();
+
+            if (profileError) {
+              console.error("[useAuth] profile fetch error:", profileError.message);
+            }
+
+            setProfile(data);
+          }
+        } catch (err) {
+          console.error("[useAuth] Unexpected error:", err);
+        }
+
+        setLoading(false);
       }
 
-      setLoading(false);
+      getSession();
     }
 
-    getSession();
-
+    // Listen for auth state changes (logout, token refresh, etc.)
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange(async (_event, session) => {
@@ -53,7 +94,34 @@ export function useAuth() {
     });
 
     return () => subscription.unsubscribe();
-  }, [supabase]);
+  }, [initialProfile]);
 
-  return { user, profile, loading };
+  const refreshProfile = useCallback(async () => {
+    const supabase = createClient();
+    const {
+      data: { user: authUser },
+    } = await supabase.auth.getUser();
+
+    if (authUser) {
+      const { data } = await supabase
+        .from("profiles")
+        .select("*")
+        .eq("id", authUser.id)
+        .single();
+
+      if (data) {
+        setProfile(data);
+      }
+    }
+  }, []);
+
+  return React.createElement(
+    AuthContext.Provider,
+    { value: { user, profile, loading, refreshProfile } },
+    children
+  );
+}
+
+export function useAuth(): AuthContextValue {
+  return useContext(AuthContext);
 }

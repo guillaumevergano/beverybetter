@@ -8,7 +8,6 @@ import { XP_PER_CORRECT_ANSWER, PASSING_SCORE_PERCENT } from "@/lib/constants";
 export function useProgress(userId: string | undefined) {
   const [progress, setProgress] = useState<Map<string, UserProgress>>(new Map());
   const [loading, setLoading] = useState(true);
-  const supabase = createClient();
 
   useEffect(() => {
     if (!userId) {
@@ -17,10 +16,15 @@ export function useProgress(userId: string | undefined) {
     }
 
     async function fetchProgress() {
-      const { data } = await supabase
+      const supabase = createClient();
+      const { data, error } = await supabase
         .from("user_progress")
         .select("*")
         .eq("user_id", userId);
+
+      if (error) {
+        console.error("[useProgress] fetch error:", error.message);
+      }
 
       if (data) {
         const map = new Map<string, UserProgress>();
@@ -32,48 +36,89 @@ export function useProgress(userId: string | undefined) {
     }
 
     fetchProgress();
-  }, [userId, supabase]);
+  }, [userId]);
 
   const saveQCMResult = useCallback(
     async (chapterId: string, score: number, total: number) => {
-      if (!userId) return;
+      if (!userId) {
+        console.error("[saveQCMResult] no userId, aborting save");
+        return;
+      }
 
+      const supabase = createClient();
       const xp = score * XP_PER_CORRECT_ANSWER;
       const percent = (score / total) * 100;
       const passed = percent >= PASSING_SCORE_PERCENT;
 
       const existing = progress.get(chapterId);
 
-      // Upsert user_progress
-      const { data: progressData } = await supabase
+      // Check if row exists in DB
+      const { data: existingRow } = await supabase
         .from("user_progress")
-        .upsert(
-          {
-            user_id: userId,
-            chapter_id: chapterId,
-            completed: passed || (existing?.completed ?? false),
-            score,
-            best_score: Math.max(score, existing?.best_score ?? 0),
-            attempts: (existing?.attempts ?? 0) + 1,
-            xp_earned: Math.max(xp, existing?.xp_earned ?? 0),
-            completed_at: passed ? new Date().toISOString() : existing?.completed_at ?? null,
-          },
-          { onConflict: "user_id,chapter_id" }
-        )
-        .select()
-        .single();
+        .select("*")
+        .eq("user_id", userId)
+        .eq("chapter_id", chapterId)
+        .maybeSingle();
 
-      if (progressData) {
+      const row = existingRow as UserProgress | null;
+
+      const payload = {
+        user_id: userId,
+        chapter_id: chapterId,
+        completed: passed || (row?.completed ?? existing?.completed ?? false),
+        score,
+        best_score: Math.max(score, row?.best_score ?? existing?.best_score ?? 0),
+        attempts: (row?.attempts ?? existing?.attempts ?? 0) + 1,
+        xp_earned: Math.max(xp, row?.xp_earned ?? existing?.xp_earned ?? 0),
+        completed_at: passed
+          ? new Date().toISOString()
+          : row?.completed_at ?? existing?.completed_at ?? null,
+      };
+
+      let savedRow: UserProgress | null = null;
+
+      if (row) {
+        // Update existing row
+        const { data, error } = await supabase
+          .from("user_progress")
+          .update(payload)
+          .eq("id", row.id)
+          .select()
+          .single();
+
+        if (error) {
+          console.error("[saveQCMResult] update error:", error.message);
+          throw new Error(error.message);
+        }
+        savedRow = data as UserProgress;
+      } else {
+        // Insert new row
+        const { data, error } = await supabase
+          .from("user_progress")
+          .insert(payload)
+          .select()
+          .single();
+
+        if (error) {
+          console.error("[saveQCMResult] insert error:", error.message);
+          throw new Error(error.message);
+        }
+        savedRow = data as UserProgress;
+      }
+
+      if (savedRow) {
         setProgress((prev) => {
           const next = new Map(prev);
-          next.set(chapterId, progressData as UserProgress);
+          next.set(chapterId, savedRow);
           return next;
         });
       }
 
       // Update XP total in profile
-      if (xp > (existing?.xp_earned ?? 0)) {
-        const xpDiff = xp - (existing?.xp_earned ?? 0);
+      const prevXp = row?.xp_earned ?? existing?.xp_earned ?? 0;
+      if (xp > prevXp) {
+        const xpDiff = xp - prevXp;
+
         const { data: profileData } = await supabase
           .from("profiles")
           .select("xp_total")
@@ -81,16 +126,20 @@ export function useProgress(userId: string | undefined) {
           .single();
 
         if (profileData) {
-          await supabase
+          const { error: profileUpdateError } = await supabase
             .from("profiles")
             .update({ xp_total: (profileData.xp_total as number) + xpDiff })
             .eq("id", userId);
+
+          if (profileUpdateError) {
+            console.error("[saveQCMResult] profile update error:", profileUpdateError.message);
+          }
         }
       }
 
-      return { passed, xp, bestScore: Math.max(score, existing?.best_score ?? 0) };
+      return { passed, xp, bestScore: Math.max(score, row?.best_score ?? existing?.best_score ?? 0) };
     },
-    [userId, progress, supabase]
+    [userId, progress]
   );
 
   return { progress, loading, saveQCMResult };

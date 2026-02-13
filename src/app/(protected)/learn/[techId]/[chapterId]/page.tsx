@@ -3,8 +3,9 @@ import Link from "next/link";
 import { createClient } from "@/lib/supabase/server";
 import { CourseAccordion } from "@/components/course/CourseAccordion";
 import { KeyPoints } from "@/components/course/KeyPoints";
+import { CourseCompletionTracker } from "@/components/course/CourseCompletionTracker";
 import { Badge } from "@/components/ui/Badge";
-import type { Technology, Chapter, CourseContent, GeneratedContent, ChapterLevel } from "@/types";
+import type { Technology, Chapter, CourseContent, GeneratedContent, ChapterLevel, UserProgress } from "@/types";
 
 interface PageProps {
   params: Promise<{ techId: string; chapterId: string }>;
@@ -14,7 +15,11 @@ export default async function ChapterCoursePage({ params }: PageProps) {
   const { techId, chapterId } = await params;
   const supabase = await createClient();
 
-  const [{ data: tech }, { data: chapter }, { data: content }] = await Promise.all([
+  const {
+    data: { user },
+  } = await supabase.auth.getUser();
+
+  const [{ data: tech }, { data: chapter }, { data: content }, { data: progressRow }] = await Promise.all([
     supabase.from("technologies").select("*").eq("id", techId).single(),
     supabase.from("chapters").select("*").eq("id", chapterId).single(),
     supabase
@@ -23,7 +28,15 @@ export default async function ChapterCoursePage({ params }: PageProps) {
       .eq("chapter_id", chapterId)
       .eq("content_type", "course")
       .single(),
+    supabase
+      .from("user_progress")
+      .select("completed")
+      .eq("user_id", user!.id)
+      .eq("chapter_id", chapterId)
+      .maybeSingle(),
   ]);
+
+  const courseAlreadyCompleted = (progressRow as UserProgress | null)?.completed ?? false;
 
   if (!tech || !chapter) notFound();
 
@@ -101,9 +114,12 @@ export default async function ChapterCoursePage({ params }: PageProps) {
         <KeyPoints points={course.keyPoints} color={typedTech.color} />
       </div>
 
+      {/* Course completion tracker — triggers gamification when user scrolls to end */}
+      <CourseCompletionTracker chapterId={chapterId} alreadyCompleted={courseAlreadyCompleted} />
+
       {/* CTA → QCM */}
       <div className="mt-8 mb-4">
-        <Link href={`/qcm/${techId}/${chapterId}`} className="block">
+        <Link href={`/learn/${techId}/${chapterId}/quiz`} className="block">
           <div
             className="w-full py-4 rounded-2xl text-center text-white font-bold text-base transition-all hover:opacity-90 hover:shadow-lg active:scale-[0.99]"
             style={{

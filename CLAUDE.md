@@ -6,6 +6,7 @@
 L'utilisateur apprend des technologies web en suivant des cours générés par IA (Claude) et en passant des QCM.
 Le MVP couvre **Next.js** et **Tailwind CSS** (2 technos, 8 chapitres chacune).
 
+
 ## 🏗️ Stack technique
 
 | Couche | Techno | Détail |
@@ -145,6 +146,28 @@ Le schéma complet est dans `supabase/migrations/001_initial_schema.sql`.
 6. **RLS Supabase** — Jamais de `service_role_key` côté client
 7. **Cache IA** — Toujours vérifier `generated_content` avant d'appeler Claude
 8. **Commits** — Format conventionnel : `feat:`, `fix:`, `docs:`, `refactor:`, `chore:`
+
+## RÈGLES DE TRAVAIL OBLIGATOIRES
+
+### Test systématique
+- Tu ne dis JAMAIS "c'est bon" ou "c'est terminé" sans avoir EXÉCUTÉ le code toi-même.
+- Après chaque modification, tu LANCES le serveur/script et tu vérifies que ça fonctionne.
+- Si c'est du backend Python : lance le script, vérifie qu'il n'y a pas d'erreur.
+- Si c'est du frontend : lance `npm run build` et vérifie qu'il compile.
+- Si c'est une API : fais un appel de test pour vérifier la réponse.
+
+### Quand tu trouves une erreur
+- Tu la corriges immédiatement et tu relances.
+- Tu itères jusqu'à ce que ça fonctionne RÉELLEMENT.
+- Tu ne me rends la main que quand le code tourne sans erreur.
+
+### Scénarios de test
+- Avant de dire que c'est terminé, imagine 3 cas limites qui pourraient casser ton code et teste-les.
+
+### Ce qui est INTERDIT
+- Dire "ça devrait fonctionner" sans avoir testé.
+- Dire "tu peux tester en lançant..." — c'est TOI qui testes.
+- Passer à l'étape suivante si l'étape en cours a des erreurs.
 
 ## 🚀 Déploiement
 

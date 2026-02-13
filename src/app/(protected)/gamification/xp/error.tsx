@@ -2,7 +2,7 @@
 
 import { Button } from "@/components/ui/Button";
 
-export default function QCMError({
+export default function XPError({
   error,
   reset,
 }: {
@@ -15,7 +15,7 @@ export default function QCMError({
         className="text-xl font-bold text-[#0f172a]"
         style={{ fontFamily: "'Space Grotesk', sans-serif" }}
       >
-        Impossible de charger le QCM
+        Une erreur est survenue
       </h2>
       <p className="text-sm text-[#64748b]">{error.message}</p>
       <Button onClick={reset}>Réessayer</Button>

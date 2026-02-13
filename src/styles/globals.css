@@ -65,3 +65,102 @@ pre {
 .animate-shake {
   animation: shake 0.4s ease;
 }
+
+@keyframes slideIn {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes score-fill {
+  from {
+    stroke-dashoffset: 339.292;
+  }
+}
+
+/* ============================================
+   Gamification Animations
+   ============================================ */
+
+/* XP bar flash when reaching 100% */
+@keyframes xp-flash {
+  0%,
+  100% {
+    box-shadow: 0 0 0 0 rgba(0, 112, 243, 0);
+  }
+  50% {
+    box-shadow: 0 0 12px 4px rgba(0, 112, 243, 0.5);
+  }
+}
+
+.animate-xp-flash {
+  animation: xp-flash 1.5s ease-in-out infinite;
+}
+
+@keyframes xp-bar-flash {
+  0%,
+  100% {
+    filter: brightness(1);
+  }
+  50% {
+    filter: brightness(1.5);
+  }
+}
+
+.animate-xp-bar-flash {
+  animation: xp-bar-flash 2s ease-in-out infinite;
+}
+
+/* Confetti fall for level up */
+@keyframes confetti {
+  0% {
+    transform: translateY(0) rotate(0deg);
+    opacity: 1;
+  }
+  100% {
+    transform: translateY(100vh) rotate(720deg);
+    opacity: 0;
+  }
+}
+
+.animate-confetti {
+  animation: confetti 3s ease-in forwards;
+}
+
+/* Shimmer for legendary badges */
+@keyframes shimmer {
+  0% {
+    box-shadow: 0 0 4px 0 rgba(234, 179, 8, 0.2);
+  }
+  50% {
+    box-shadow: 0 0 12px 4px rgba(234, 179, 8, 0.3);
+  }
+  100% {
+    box-shadow: 0 0 4px 0 rgba(234, 179, 8, 0.2);
+  }
+}
+
+.animate-shimmer {
+  animation: shimmer 2s ease-in-out infinite;
+}
+
+/* Slide up for toasts */
+@keyframes slideUp {
+  from {
+    opacity: 0;
+    transform: translateY(12px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+.animate-slide-up {
+  animation: slideUp 0.3s ease-out;
+}

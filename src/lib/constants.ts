@@ -30,7 +30,7 @@ export const ROUTES = {
   LEARN: (techId: string) => `/learn/${techId}`,
   CHAPTER: (techId: string, chapterId: string) =>
     `/learn/${techId}/${chapterId}`,
-  QCM: (techId: string, chapterId: string) => `/qcm/${techId}/${chapterId}`,
+  QCM: (techId: string, chapterId: string) => `/learn/${techId}/${chapterId}/quiz`,
 } as const;
 
 // Design tokens

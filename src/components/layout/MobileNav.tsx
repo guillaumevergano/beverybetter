@@ -8,6 +8,7 @@ const navItems = [
   { href: "/dashboard", label: "Accueil", icon: "🏠" },
   { href: "/learn/nextjs", label: "Next.js", icon: "▲" },
   { href: "/learn/tailwind", label: "Tailwind", icon: "🌊" },
+  { href: "/profile", label: "Profil", icon: "👤" },
 ];
 
 export function MobileNav() {

@@ -5,6 +5,9 @@
 // ---- Database Enums ----
 export type ChapterLevel = "débutant" | "intermédiaire" | "avancé";
 export type ContentType = "course" | "qcm";
+export type BadgeRarity = "common" | "rare" | "epic" | "legendary";
+export type ChallengeType = "weekly" | "monthly";
+export type XPSource = "course" | "quiz" | "badge" | "challenge" | "streak" | "certification";
 
 // ---- Database Tables ----
 export interface Profile {
@@ -12,6 +15,8 @@ export interface Profile {
   pseudo: string;
   avatar_url: string | null;
   xp_total: number;
+  current_level: number;
+  current_title: string;
   created_at: string;
   updated_at: string;
 }
@@ -112,6 +117,13 @@ export interface GenerateQCMResponse {
   fromCache: boolean;
 }
 
+// ---- Quiz UI ----
+export interface QuizAnswer {
+  questionIndex: number;
+  selectedAnswer: number;
+  isCorrect: boolean;
+}
+
 // ---- UI State ----
 export interface TechProgress {
   tech: Technology;
@@ -131,3 +143,162 @@ export const LEVEL_COLORS: Record<
   intermédiaire: { bg: "#fef3c7", text: "#92400e", dot: "#f59e0b" },
   avancé: { bg: "#fee2e2", text: "#991b1b", dot: "#ef4444" },
 };
+
+// ---- Gamification ----
+
+export interface XPEvent {
+  id: string;
+  user_id: string;
+  amount: number;
+  source: XPSource;
+  source_id: string | null;
+  created_at: string;
+}
+
+export interface StreakInfo {
+  user_id: string;
+  current_streak: number;
+  longest_streak: number;
+  last_activity_date: string | null;
+  freeze_count: number;
+  updated_at: string;
+}
+
+export interface Badge {
+  id: string;
+  slug: string;
+  name: string;
+  description: string;
+  icon: string;
+  rarity: BadgeRarity;
+  condition_type: string;
+  condition_value: number;
+  xp_reward: number;
+  created_at: string;
+}
+
+export interface UserBadge {
+  user_id: string;
+  badge_id: string;
+  unlocked_at: string;
+  badge?: Badge;
+}
+
+export interface Challenge {
+  id: string;
+  title: string;
+  description: string;
+  type: ChallengeType;
+  condition_type: string;
+  condition_value: number;
+  xp_reward: number;
+  start_date: string;
+  end_date: string;
+  created_at: string;
+}
+
+export interface UserChallenge {
+  user_id: string;
+  challenge_id: string;
+  progress: number;
+  completed: boolean;
+  completed_at: string | null;
+  challenge?: Challenge;
+}
+
+export interface CertificationInfo {
+  id: string;
+  technology_id: string;
+  name: string;
+  description: string;
+  required_chapters: number;
+  required_avg_score: number;
+  xp_reward: number;
+  created_at: string;
+}
+
+export interface LevelInfo {
+  level: number;
+  title: string;
+  minXP: number;
+  maxXP: number;
+  currentXP: number;
+  progress: number;
+}
+
+export interface UserStats {
+  xp_total: number;
+  current_level: number;
+  current_title: string;
+  level_progress: LevelInfo;
+  streak: StreakInfo | null;
+  badges_count: number;
+  courses_completed: number;
+  quizzes_completed: number;
+  perfect_quizzes: number;
+}
+
+export interface GamificationEvent {
+  type: "xp" | "level_up" | "badge" | "streak";
+  amount?: number;
+  badge?: Badge;
+  new_level?: number;
+  new_title?: string;
+  streak_days?: number;
+}
+
+// ---- Exam / Certification ----
+
+export type CertMention = "Bien" | "Très Bien" | "Exceptionnelle";
+
+export interface ExamAttempt {
+  id: string;
+  user_id: string;
+  technology_id: string;
+  score: number;
+  total: number;
+  passed: boolean;
+  completed_at: string;
+}
+
+export interface UserCertification {
+  id: string;
+  user_id: string;
+  technology_id: string;
+  exam_attempt_id: string;
+  cert_number: string;
+  score: number;
+  total: number;
+  mention: CertMention;
+  verification_url: string;
+  certified_at: string;
+}
+
+export interface ExamQuestion {
+  question: string;
+  options: [string, string, string, string];
+  correct: 0 | 1 | 2 | 3;
+  explanation: string;
+  chapter_id: string;
+  chapter_title: string;
+}
+
+export interface ExamQuestionClient {
+  question: string;
+  options: [string, string, string, string];
+  chapter_title: string;
+  index: number;
+}
+
+export interface ExamResult {
+  passed: boolean;
+  score: number;
+  total: number;
+  percentage: number;
+  mention: CertMention | null;
+  cert_number: string | null;
+  questions: ExamQuestion[];
+  answers: number[];
+  attemptsThisWeek: number;
+  maxAttemptsPerWeek: number;
+}
