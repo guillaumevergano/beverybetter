@@ -6,6 +6,7 @@ import { formatXP, calcPercent } from "@/lib/utils";
 import { BadgeGrid } from "@/components/gamification/BadgeGrid";
 import { ActivityGraph } from "@/components/gamification/ActivityGraph";
 import { ChallengeCard } from "@/components/gamification/ChallengeCard";
+import { WelcomePopup } from "@/components/ui/WelcomePopup";
 import type {
   Profile,
   Technology,
@@ -104,6 +105,7 @@ export default async function ProfilePage() {
 
   return (
     <div className="space-y-8">
+      <WelcomePopup />
       {/* Profile header */}
       <div className="bg-white rounded-[20px] border border-[#e2e8f0] p-6">
         <div className="flex flex-col sm:flex-row items-center gap-5">

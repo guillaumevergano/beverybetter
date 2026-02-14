@@ -5,6 +5,7 @@ import { useRouter, useSearchParams } from "next/navigation";
 import Link from "next/link";
 import { createClient } from "@/lib/supabase/client";
 import { Button } from "@/components/ui/Button";
+import { joinViaReferralAction, joinTeamAction } from "@/actions/team";
 
 export default function SignupPage() {
   const [pseudo, setPseudo] = useState("");
@@ -39,11 +40,27 @@ export default function SignupPage() {
       return;
     }
 
-    if (inviteCode) {
-      router.push(`/invite/${inviteCode}`);
-    } else {
-      router.push("/dashboard");
+    // Auto-login apres inscription
+    const { error: signInError } = await supabase.auth.signInWithPassword({
+      email,
+      password,
+    });
+
+    if (signInError) {
+      setError(signInError.message);
+      setLoading(false);
+      return;
     }
+
+    // Si invite code, tenter de rejoindre l'equipe/parrainage
+    if (inviteCode) {
+      const referralResult = await joinViaReferralAction(inviteCode);
+      if (!referralResult.success) {
+        await joinTeamAction(inviteCode);
+      }
+    }
+
+    router.push("/profile?welcome=1");
     router.refresh();
   }
 
